@@ -1,0 +1,8 @@
+
+Version 1.1:
+
+-Add:
+	Checking the vest
+
+-Changed:
+	Checking hasInterface before exec

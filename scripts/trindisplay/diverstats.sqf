@@ -114,7 +114,7 @@ It is possible to create any mixture of O2, N2 and He (provided that O2 is >= 9%
 
 //---Main Loop---
 scopeName "main";
-if (isServer && !isDedicated) then 
+if (hasInterface) then 
 {
 
 	private "_pGridPos";
@@ -126,7 +126,10 @@ if (isServer && !isDedicated) then
 	scopeName "uw_loop";
 	if (underwater _trinDiver) then
 			{				
-			
+			//if I don't have the correct vest I get out of the main scope
+			_diverVest = vest _trinDiver;
+			//hint _diverVest;
+			if(_diverVest!="V_RebreatherMCOE") then {breakOut "main";};
 			/*
 			--DEBUG--
 			hint format ["O Tis %1 \n N Tis %2 \n He Tis %3 \n TisA Val %4 \n TisB Val %5 \n DecoTime %6 \n Deep Stop: %7 \n DS Time: %8 \n NarcFactor  %9 \n TisSat %10 \n Ceiling %11 \n Damage: %12 \n Ceiling(ex) %13 \n %14", _O2TisTot, _nTisTot, _HeTisTot, _tisAval, _tisBval, [((_decoTime)/60)+.01,"HH:MM"] call bis_fnc_timetostring, (round(_deepStopCeil /5) *5),[((_deepStopTime)/60)+.01,"HH:MM"] call bis_fnc_timetostring, _narcFactor, _tisTox, _AscCeil, _diverDamage, _AscCeilB, _O2toxperc];			
