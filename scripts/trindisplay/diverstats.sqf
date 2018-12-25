@@ -18,6 +18,8 @@ _ascTime = 0;
 _maxDepth = 0;
 _timeleft = 0;
 _diveTime = 0;
+_diveTimeZone1 = 0;
+_diveTimeZone2 = 0;
 _diverBearing = 0;
 _O2toxperc = 0;
 
@@ -118,21 +120,23 @@ if (hasInterface) then
 {
 
 	private "_pGridPos";
-
+	
+	
 	while {alive _trinDiver && _psi >= 0 && player == _trinDiver} do
  {
-	
+
 	
 	scopeName "uw_loop";
 	if (underwater _trinDiver) then
 			{				
-			//if I don't have the correct vest I get out of the main scope
+			//If I don't have the correct vest I get out of the main scope
 			_diverVest = vest _trinDiver;
 			//hint _diverVest;
 			if(_diverVest!="V_RebreatherMCOE") then {breakOut "main";};
+
 			/*
-			--DEBUG--
-			hint format ["O Tis %1 \n N Tis %2 \n He Tis %3 \n TisA Val %4 \n TisB Val %5 \n DecoTime %6 \n Deep Stop: %7 \n DS Time: %8 \n NarcFactor  %9 \n TisSat %10 \n Ceiling %11 \n Damage: %12 \n Ceiling(ex) %13 \n %14", _O2TisTot, _nTisTot, _HeTisTot, _tisAval, _tisBval, [((_decoTime)/60)+.01,"HH:MM"] call bis_fnc_timetostring, (round(_deepStopCeil /5) *5),[((_deepStopTime)/60)+.01,"HH:MM"] call bis_fnc_timetostring, _narcFactor, _tisTox, _AscCeil, _diverDamage, _AscCeilB, _O2toxperc];			
+			//--DEBUG--
+			hint format ["O Tis %1 \n N Tis %2 \n He Tis %3 \n TisA Val %4 \n TisB Val %5 \n DecoTime %6 \n Deep Stop: %7 \n DS Time: %8 \n NarcFactor  %9 \n TisSat %10 \n Ceiling %11 \n Damage: %12 \n Ceiling(ex) %13 \n O2 ToxPerc %14 \n diveTimeZone1 %15 \n diveTimeZone2 %16", _O2TisTot, _nTisTot, _HeTisTot, _tisAval, _tisBval, [((_decoTime)/60)+.01,"HH:MM"] call bis_fnc_timetostring, (round(_deepStopCeil /5) *5),[((_deepStopTime)/60)+.01,"HH:MM"] call bis_fnc_timetostring, _narcFactor, _tisTox, _AscCeil, _diverDamage, _AscCeilB, _O2toxperc, _diveTimeZone1, _diveTimeZone2];			
 			//titleText [format["%1", _ObarPerc],"PLAIN"];
 			//titleText [format["%1", _HbarPerc],"PLAIN"];
 			//titleText [format["%1", _doDeco],"PLAIN"];
@@ -160,6 +164,8 @@ if (hasInterface) then
 					};
 					
 			_diveTime = _diveTime + 1;
+			if (_depth > 32) then {_diveTimeZone1 = _diveTimeZone1 +1};
+			if (_depth > 80) then {_diveTimeZone2 = _diveTimeZone2 +1};
 			_depth = (((getPosASL _trinDiver) select 2)* -3.28); //Conversion to feet (inverted for pressure calculation)
 			_pressure = ((_depth / 33) + 1);			
 			_depth2deco = _depth - _AscCeil;
@@ -261,7 +267,7 @@ if (hasInterface) then
 						(_displayUI displayCtrl 1124) ctrlSetText "scripts\trindisplay\images\tis_9.paa";					
 						};
 						case (_nTisTot > 2.38): {
-						playSound "trin_dispWarn";	
+						//playSound "trin_dispWarn";	
 						(_displayUI displayCtrl 1124) ctrlSetText "scripts\trindisplay\images\tis_9.paa";					
 						};	
 			};			
@@ -321,7 +327,7 @@ if (hasInterface) then
 			};
 			
 			//Display element for ascent warning and init DCS effects
-			if (_dDepth > 8) then			 
+			if (_dDepth > 6.8) then	//I modify the maximum speed to ascend from 8 to 6.8		 
 				{						
 					playSound "trin_dispExit";
 					(_displayUI displayCtrl 1133) ctrlSetText "";
@@ -329,7 +335,7 @@ if (hasInterface) then
 					_fAscCntdn = _fAscCntdn - 1;					
 					if (_fAscCntdn == 0) then
 					{
-						null = ["true", "true", _trinDiver, (1-(_nTisTot *1.25))] execVM "scripts\trindisplay\effects\trin_DCSEffects.sqf";					
+						null = ["true", "true", _trinDiver, (_nTisTot *0.10)] execVM "scripts\trindisplay\effects\trin_DCSEffects.sqf";	//Before (1-(_nTisTot *1.25))				
 						_fAscCntdn = 5;
 					};					
 				}
@@ -397,20 +403,53 @@ if (hasInterface) then
 			//Simulate Tissue Saturation; See scripts\trindisplay\functions\trin_fn_initTissues.sqf
 			switch (true) do
 			{
-					case (_depthB > _depthA): {						 
-						 _nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;
+					case (_depthB > _depthA): {	 //Before there was not switch, only _nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;
+						switch (true) do
+						{
+							case (_depth <= 32): {
+								_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;
+							};
+							case (_depth > 32 && _depth <= 80): {
+								_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTimeZone1] call getTisTot;
+							};
+							case (_depth > 80): {
+								_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTimeZone2] call getTisTot;
+							};
+						};
 						 _HeTisTot = [_percHe, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;
 						 _O2TisTot = [_percO2, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;
 						_tempC = _tempC + (_dDepth *0.0004);
 						
 						};
-					case (_depthA > _depthB): {
-						_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;
+					case (_depthA > _depthB): {  //Before there was not switch, only _nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;
+						switch (true) do
+						{
+							case (_depth <= 32): {
+								_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;
+							};
+							case (_depth > 32 && _depth <= 80): {
+								_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTimeZone1] call getTisTot;
+							};
+							case (_depth > 80): {
+								_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTimeZone2] call getTisTot;
+							};
+						};
 						_HeTisTot = [_percHe, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;
 						_O2TisTot = [_percO2, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;										
 						};
-					case (_depthA == _depthB): {
-						_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;
+					case (_depthA == _depthB): {  //Before there was not switch, only _nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;
+						switch (true) do
+						{
+							case (_depth <= 32): {
+								_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;
+							};
+							case (_depth > 32 && _depth <= 80): {
+								_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTimeZone1] call getTisTot;
+							};
+							case (_depth > 80): {
+								_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTimeZone2] call getTisTot;
+							};
+						};
 						_HeTisTot = [_percHe, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;
 						_O2TisTot = [_percO2, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;						
 						};	
@@ -430,7 +469,7 @@ if (hasInterface) then
 			};			
 			
 			//Init Deco Profile
-			if((_AscCeil == 10) && (_doDeco == 0)) then 
+			if((_AscCeil == 10) && (_doDeco == 0)) then
 			{				
 				_decoTime = _AscCeil *(round(_totalTis *4));				
 				_doDeco = 1;
@@ -438,7 +477,7 @@ if (hasInterface) then
 				playSound "trin_dispStart";
 			};
 			
-			if((_AscCeilB > 10) && (_doDeepStop < 1)) then 
+			if((_AscCeilB > 10) && (_doDeepStop < 1)) then
 			{				
 				_deepStopCeil = _depth /2;				
 				_deepStopTime = _AscCeil *(round(_totalTis *3.5));				
@@ -460,6 +499,13 @@ if (hasInterface) then
 				_AscCeil = 0;
 				_doDeco = 0;
 				playSound "trin_dispClear";
+				_diveTimeZone1 = 0; // Reset diveTimeZone1
+				_diveTimeZone2 = 0;  // Reset diveTimeZone2
+			};
+
+			//Damege if deco is not done
+			if (_doDeco == 1 && _depth < 10-3) then {
+				null = ["true", "true", _trinDiver, (_nTisTot *0.10)] execVM "scripts\trindisplay\effects\trin_DCSEffects.sqf";
 			};
 			
 			// Start deep stop countdown once unit is with range
@@ -476,7 +522,13 @@ if (hasInterface) then
 				_deepStopCeil = 0;
 				_doDeepStop = 0;
 				playSound "trin_dispClear";
+				_diveTimeZone2 = 0;  // Reset diveTimeZone2
 				
+			};
+
+			//Damege if deco is not done
+			if (_doDeepStop == 1 && _depth < _deepStopCeil-3) then {
+				null = ["true", "true", _trinDiver, (_nTisTot *0.10)] execVM "scripts\trindisplay\effects\trin_DCSEffects.sqf";
 			};
 			
 			//Narcotic Effects kick in if toxicity threshold passed. --WIP--
@@ -555,6 +607,8 @@ if (hasInterface) then
 		
 	2 cutText ["","PLAIN"];
 	_diveCnt = 0;
-				
+	if (!(underwater _trinDiver)) then {
+		_diveTime = 0;  //Dive time is reset when you are not underwater			
+	};
  };
 };

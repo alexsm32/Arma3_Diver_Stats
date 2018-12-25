@@ -1,4 +1,17 @@
 
+Version 1.2:
+
+-Add:
+	Two new time variables depending the depth to improve the nitrogen tissue saturation
+	Damage when deco is not done
+	Dive time is reset when you are not underwater
+
+-Fixed:
+	Damage in fast ascend
+
+-Changed:
+	Maximum speed to ascend
+
 Version 1.1:
 
 -Add:
