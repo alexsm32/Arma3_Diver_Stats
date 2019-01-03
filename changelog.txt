@@ -1,4 +1,9 @@
 
+Version 1.2.2:
+
+-Changed:
+	Improved logic of the deep dive zone
+
 Version 1.2:
 
 -Add:

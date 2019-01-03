@@ -20,6 +20,7 @@ _timeleft = 0;
 _diveTime = 0;
 _diveTimeZone1 = 0;
 _diveTimeZone2 = 0;
+_diveZone2 = 80;
 _diverBearing = 0;
 _O2toxperc = 0;
 
@@ -136,7 +137,7 @@ if (hasInterface) then
 
 			/*
 			//--DEBUG--
-			hint format ["O Tis %1 \n N Tis %2 \n He Tis %3 \n TisA Val %4 \n TisB Val %5 \n DecoTime %6 \n Deep Stop: %7 \n DS Time: %8 \n NarcFactor  %9 \n TisSat %10 \n Ceiling %11 \n Damage: %12 \n Ceiling(ex) %13 \n O2 ToxPerc %14 \n diveTimeZone1 %15 \n diveTimeZone2 %16", _O2TisTot, _nTisTot, _HeTisTot, _tisAval, _tisBval, [((_decoTime)/60)+.01,"HH:MM"] call bis_fnc_timetostring, (round(_deepStopCeil /5) *5),[((_deepStopTime)/60)+.01,"HH:MM"] call bis_fnc_timetostring, _narcFactor, _tisTox, _AscCeil, _diverDamage, _AscCeilB, _O2toxperc, _diveTimeZone1, _diveTimeZone2];			
+			hint format ["O Tis %1 \n N Tis %2 \n He Tis %3 \n TisA Val %4 \n TisB Val %5 \n DecoTime %6 \n Deep Stop: %7 \n DS Time: %8 \n NarcFactor  %9 \n TisSat %10 \n Ceiling %11 \n Damage: %12 \n Ceiling(ex) %13 \n O2 ToxPerc %14 \n diveTimeZone1 %15 \n diveTimeZone2 %16 \n diveZone2 %17", _O2TisTot, _nTisTot, _HeTisTot, _tisAval, _tisBval, [((_decoTime)/60)+.01,"HH:MM"] call bis_fnc_timetostring, (round(_deepStopCeil /5) *5),[((_deepStopTime)/60)+.01,"HH:MM"] call bis_fnc_timetostring, _narcFactor, _tisTox, _AscCeil, _diverDamage, _AscCeilB, _O2toxperc, _diveTimeZone1, _diveTimeZone2, _diveZone2];			
 			//titleText [format["%1", _ObarPerc],"PLAIN"];
 			//titleText [format["%1", _HbarPerc],"PLAIN"];
 			//titleText [format["%1", _doDeco],"PLAIN"];
@@ -165,7 +166,7 @@ if (hasInterface) then
 					
 			_diveTime = _diveTime + 1;
 			if (_depth > 32) then {_diveTimeZone1 = _diveTimeZone1 +1};
-			if (_depth > 80) then {_diveTimeZone2 = _diveTimeZone2 +1};
+			if (_depth > _diveZone2) then {_diveTimeZone2 = _diveTimeZone2 +1};
 			_depth = (((getPosASL _trinDiver) select 2)* -3.28); //Conversion to feet (inverted for pressure calculation)
 			_pressure = ((_depth / 33) + 1);			
 			_depth2deco = _depth - _AscCeil;
@@ -409,10 +410,10 @@ if (hasInterface) then
 							case (_depth <= 32): {
 								_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;
 							};
-							case (_depth > 32 && _depth <= 80): {
+							case (_depth > 32 && _depth <= _diveZone2): {
 								_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTimeZone1] call getTisTot;
 							};
-							case (_depth > 80): {
+							case (_depth > _diveZone2): {
 								_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTimeZone2] call getTisTot;
 							};
 						};
@@ -427,10 +428,10 @@ if (hasInterface) then
 							case (_depth <= 32): {
 								_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;
 							};
-							case (_depth > 32 && _depth <= 80): {
+							case (_depth > 32 && _depth <= _diveZone2): {
 								_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTimeZone1] call getTisTot;
 							};
-							case (_depth > 80): {
+							case (_depth > _diveZone2): {
 								_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTimeZone2] call getTisTot;
 							};
 						};
@@ -443,10 +444,10 @@ if (hasInterface) then
 							case (_depth <= 32): {
 								_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;
 							};
-							case (_depth > 32 && _depth <= 80): {
+							case (_depth > 32 && _depth <= _diveZone2): {
 								_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTimeZone1] call getTisTot;
 							};
-							case (_depth > 80): {
+							case (_depth > _diveZone2): {
 								_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTimeZone2] call getTisTot;
 							};
 						};
@@ -483,6 +484,9 @@ if (hasInterface) then
 				_deepStopTime = _AscCeil *(round(_totalTis *3.5));				
 				playSound "trin_dispStart";
 				_doDeepStop = 1;
+				if ((_depth /2) > 80) then {
+					_diveZone2 = _depth /2;
+				};
 			};
 			
 			// Start deco countdown once unit is with range
@@ -501,6 +505,7 @@ if (hasInterface) then
 				playSound "trin_dispClear";
 				_diveTimeZone1 = 0; // Reset diveTimeZone1
 				_diveTimeZone2 = 0;  // Reset diveTimeZone2
+				_diveZone2 = 80;
 			};
 
 			//Damege if deco is not done
