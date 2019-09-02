@@ -1,4 +1,13 @@
 
+Version 1.2.3:
+
+-Add:
+	Decreasing of the time spended underwater when diver is not diving to simulate multiple dives
+
+-Deleted:
+	Dive zones
+	Dive times
+
 Version 1.2.2:
 
 -Changed:

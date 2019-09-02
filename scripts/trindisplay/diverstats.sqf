@@ -18,9 +18,6 @@ _ascTime = 0;
 _maxDepth = 0;
 _timeleft = 0;
 _diveTime = 0;
-_diveTimeZone1 = 0;
-_diveTimeZone2 = 0;
-_diveZone2 = 80;
 _diverBearing = 0;
 _O2toxperc = 0;
 
@@ -137,7 +134,7 @@ if (hasInterface) then
 
 			/*
 			//--DEBUG--
-			hint format ["O Tis %1 \n N Tis %2 \n He Tis %3 \n TisA Val %4 \n TisB Val %5 \n DecoTime %6 \n Deep Stop: %7 \n DS Time: %8 \n NarcFactor  %9 \n TisSat %10 \n Ceiling %11 \n Damage: %12 \n Ceiling(ex) %13 \n O2 ToxPerc %14 \n diveTimeZone1 %15 \n diveTimeZone2 %16 \n diveZone2 %17", _O2TisTot, _nTisTot, _HeTisTot, _tisAval, _tisBval, [((_decoTime)/60)+.01,"HH:MM"] call bis_fnc_timetostring, (round(_deepStopCeil /5) *5),[((_deepStopTime)/60)+.01,"HH:MM"] call bis_fnc_timetostring, _narcFactor, _tisTox, _AscCeil, _diverDamage, _AscCeilB, _O2toxperc, _diveTimeZone1, _diveTimeZone2, _diveZone2];			
+			hint format ["O Tis %1 \n N Tis %2 \n He Tis %3 \n TisA Val %4 \n TisB Val %5 \n DecoTime %6 \n Deep Stop: %7 \n DS Time: %8 \n NarcFactor  %9 \n TisSat %10 \n Ceiling %11 \n Damage: %12 \n Ceiling(ex) %13 \n O2 ToxPerc %14 \n diveTimeZone1 %15 \n diveTimeZone2 %16 \n diveZone2 %17", _O2TisTot, _nTisTot, _HeTisTot, _tisAval, _tisBval, [((_decoTime)/60)+.01,"HH:MM"] call bis_fnc_timetostring, (round(_deepStopCeil /5) *5),[((_deepStopTime)/60)+.01,"HH:MM"] call bis_fnc_timetostring, _narcFactor, _tisTox, _AscCeil, _diverDamage, _AscCeilB, _O2toxperc];			
 			//titleText [format["%1", _ObarPerc],"PLAIN"];
 			//titleText [format["%1", _HbarPerc],"PLAIN"];
 			//titleText [format["%1", _doDeco],"PLAIN"];
@@ -165,8 +162,6 @@ if (hasInterface) then
 					};
 					
 			_diveTime = _diveTime + 1;
-			if (_depth > 32) then {_diveTimeZone1 = _diveTimeZone1 +1};
-			if (_depth > _diveZone2) then {_diveTimeZone2 = _diveTimeZone2 +1};
 			_depth = (((getPosASL _trinDiver) select 2)* -3.28); //Conversion to feet (inverted for pressure calculation)
 			_pressure = ((_depth / 33) + 1);			
 			_depth2deco = _depth - _AscCeil;
@@ -404,55 +399,14 @@ if (hasInterface) then
 			//Simulate Tissue Saturation; See scripts\trindisplay\functions\trin_fn_initTissues.sqf
 			switch (true) do
 			{
-					case (_depthB > _depthA): {	 //Before there was not switch, only _nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;
-						switch (true) do
-						{
-							case (_depth <= 32): {
-								_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;
-							};
-							case (_depth > 32 && _depth <= _diveZone2): {
-								_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTimeZone1] call getTisTot;
-							};
-							case (_depth > _diveZone2): {
-								_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTimeZone2] call getTisTot;
-							};
+					case (_depthB > _depthA): {
+							_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;
 						};
-						 _HeTisTot = [_percHe, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;
-						 _O2TisTot = [_percO2, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;
-						_tempC = _tempC + (_dDepth *0.0004);
-						
+					case (_depthA > _depthB): {
+							_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;
 						};
-					case (_depthA > _depthB): {  //Before there was not switch, only _nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;
-						switch (true) do
-						{
-							case (_depth <= 32): {
-								_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;
-							};
-							case (_depth > 32 && _depth <= _diveZone2): {
-								_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTimeZone1] call getTisTot;
-							};
-							case (_depth > _diveZone2): {
-								_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTimeZone2] call getTisTot;
-							};
-						};
-						_HeTisTot = [_percHe, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;
-						_O2TisTot = [_percO2, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;										
-						};
-					case (_depthA == _depthB): {  //Before there was not switch, only _nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;
-						switch (true) do
-						{
-							case (_depth <= 32): {
-								_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;
-							};
-							case (_depth > 32 && _depth <= _diveZone2): {
-								_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTimeZone1] call getTisTot;
-							};
-							case (_depth > _diveZone2): {
-								_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTimeZone2] call getTisTot;
-							};
-						};
-						_HeTisTot = [_percHe, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;
-						_O2TisTot = [_percO2, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;						
+					case (_depthA == _depthB): {
+							_nTisTot = [_percN2, _tisK, _pressure, _dPressure, _diveTime] call getTisTot;
 						};	
 			};		
 			
@@ -484,9 +438,6 @@ if (hasInterface) then
 				_deepStopTime = _AscCeil *(round(_totalTis *3.5));				
 				playSound "trin_dispStart";
 				_doDeepStop = 1;
-				if ((_depth /2) > 80) then {
-					_diveZone2 = _depth /2;
-				};
 			};
 			
 			// Start deco countdown once unit is with range
@@ -503,9 +454,6 @@ if (hasInterface) then
 				_AscCeil = 0;
 				_doDeco = 0;
 				playSound "trin_dispClear";
-				_diveTimeZone1 = 0; // Reset diveTimeZone1
-				_diveTimeZone2 = 0;  // Reset diveTimeZone2
-				_diveZone2 = 80;
 			};
 
 			//Damege if deco is not done
@@ -526,9 +474,7 @@ if (hasInterface) then
 				_deepStopTime = 0;
 				_deepStopCeil = 0;
 				_doDeepStop = 0;
-				playSound "trin_dispClear";
-				_diveTimeZone2 = 0;  // Reset diveTimeZone2
-				
+				playSound "trin_dispClear";				
 			};
 
 			//Damege if deco is not done
@@ -612,8 +558,9 @@ if (hasInterface) then
 		
 	2 cutText ["","PLAIN"];
 	_diveCnt = 0;
-	if (!(underwater _trinDiver)) then {
-		_diveTime = 0;  //Dive time is reset when you are not underwater			
+	if (!(underwater _trinDiver) && _diveTime>0) then {
+		_diveTime = _diveTime - 0.5;  //Dive time is decreased when you are not underwater
+		sleep 1;	
 	};
  };
 };
